@@ -2781,7 +2781,13 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         this.forceMovement = this.teleportPosition = this.getPosition();
 
         ResourcePacksInfoPacket infoPacket = new ResourcePacksInfoPacket();
-        infoPacket.resourcePackEntries = this.server.getResourcePackManager().getResourceStack();
+        for (ResourcePack pack : this.server.getResourcePackManager().getResourceStack()) {
+            if (Objects.equals(pack.getPackName(), "<1.19.70") && protocol >= ProtocolInfo.v1_19_70) {
+                infoPacket.resourcePackEntries = new ResourcePack[]{pack};
+            } else if (protocol < ProtocolInfo.v1_19_70) {
+                infoPacket.resourcePackEntries = new ResourcePack[]{pack};
+            }
+        }
         infoPacket.mustAccept = this.server.getForceResources();
         this.dataPacket(infoPacket);
     }
@@ -3002,7 +3008,12 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                 this.protocol = loginPacket.getProtocol();
 
-                this.unverifiedUsername = TextFormat.clean(loginPacket.username);
+                if (protocol >= ProtocolInfo.v1_16_0) {
+                    this.unverifiedUsername = TextFormat.clean(loginPacket.username)
+                            .replace(" ", "_");
+                } else {
+                    this.unverifiedUsername = TextFormat.clean(loginPacket.username);
+                }
 
                 if (!ProtocolInfo.SUPPORTED_PROTOCOLS.contains(this.protocol)) {
                     this.close("", "You are running unsupported Minecraft version");
